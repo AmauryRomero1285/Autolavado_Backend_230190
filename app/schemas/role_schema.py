@@ -1,35 +1,26 @@
-# pylint: disable=too-few-public-methods
 '''
-Role Schema Module.
-Defines Pydantic models for Role validation and serialization.
+Docstring for schemas.schema_rol
 '''
-from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
+from datetime import datetime
 
 class RoleBase(BaseModel):
-    '''
-    Base schema for Role with common attributes.
-    '''
-    description: str
-    is_active: bool = True
-
-class RoleCreate(RoleBase):
-    '''
-    Schema for creating a new Role.
-    '''
+    '''Clase para modelar los campos de tabla Role'''
+    name:str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+# pylint: disable=too-few-public-methods, unnecessary-pass
+class RolCreate(RoleBase):
+    '''Clase para crear un Rol basado en la tabla Role'''
+    pass
+class RoleUpdate(RoleBase):
+    '''Clase para actualizar un Rol basado en la tabla Role'''
     pass
 
-class RoleUpdate(BaseModel):
-    '''
-    Schema for updating an existing Role.
-    '''
-    description: Optional[str] = None
-    is_active: Optional[bool] = None
-
 class Role(RoleBase):
-    '''
-    Schema for Role response, including database fields.
-    '''
-    id: int
-    
-    model_config = ConfigDict(from_attributes=True)
+    '''Clase para realizar operaciones por ID en tabla Role'''
+    Id: int
+    class Config:
+        '''Utilizar el orm para ejecutar las funcionalidades'''
+        orm_mode =True

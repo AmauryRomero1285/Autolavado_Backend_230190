@@ -19,6 +19,7 @@ class User(Base):
     second_last_name = Column(String(60))
     username = Column(String(60))
     password = Column(String(60))
+    address= Column(String(120))
     phone_number = Column(String(10))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime)

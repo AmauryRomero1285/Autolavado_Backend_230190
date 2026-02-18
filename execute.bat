@@ -1,20 +1,22 @@
 @echo off
 cd Autolavado_Backend_230190
-:: Crear estructura principal
-mkdir app test docs
-:: Crear subdirectorios en app
-mkdir app\api\v1 app\models app\schemas app\services app\database app\core
-:: crear archivos iniciales
-echo .> app\__init__.py
-echo .> app\main.py
-echo .> app\api\v1\__init__.py
-echo .> app\api\v1\clients.py
-echo .> app\api\v1\employees.py
-echo .> app\api\v1\cashiers.py
-echo .> app\api\v1\vehicles.py
-echo .> app\models\vehicle.py
-echo .> requeriments.txt
-echo .> env.example
 
-echo Estructura de proyecto creada con exito.
+:: Entrar a app y asegurar que existe schemas
+cd app
+if not exist schemas (
+    mkdir schemas
+)
+
+:: Entrar a schemas para crear los archivos
+cd schemas
+
+:: Crear los archivos faltantes basados en la imagen
+echo .> client_schema.py
+echo .> services_schema.py
+echo .> vehicle_services_schema.py
+echo .> vehicle_schema.py
+echo .> role_schema.py
+echo .> user_schema.py
+
+echo Estructura de Schemas actualizada con exito.
 pause

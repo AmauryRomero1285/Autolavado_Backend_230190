@@ -3,7 +3,7 @@
 Role Model Module.
 Defines the structure for the tbc_role table.
 '''
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean,DateTime, func
 from database.db import Base
 
 class Role(Base):
@@ -13,5 +13,7 @@ class Role(Base):
     __tablename__ = "tbc_role"
 
     id = Column(Integer, primary_key=True, index=True)
-    description = Column(String(60))
+    name = Column(String(60))
     is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at= Column(DateTime, onupdate=func.now())
