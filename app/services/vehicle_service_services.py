@@ -1,25 +1,43 @@
-import models.role_model
-import schemas.role_schema
-
+import models.vehicle_services_model
+import schemas.vehicle_services_schema
 from sqlalchemy.orm import Session
 
-def get_rol(db:Session, skip: int =0, limit:int=10):
-    return db.query(models.role_model.Role).offset(skip).limit(limit).all()
-    
-def get_rol_by_name(db:Session,name:str):
-    return db.query(models.role_model.Role).filter(models.role_model.Role.name == name).first()
+def get_vehicle_service(db: Session, skip: int = 0, limit: int = 10):
+    '''Función para obtener un usuario_vehiculo_servicio por su ID'''
+    return db.query(models.vehicle_services_model.VehicleService).offset(skip).limit(limit).all()
 
-def create_rol(db:Session, role:schemas.role_schema.RolCreate):
-    db_role=models.role_model.Role(
-        name=role.name,
-        is_active=role.is_active,
-        created_at=role.created_at,
-        updated_at=role.updated_at
+def create_vehicle_service(db: Session, vehicule_service: schemas.vehicle_services_schema.VehicleServiceCreate):
+    '''Función para crear un nuevo usuario_vehiculo_servicio'''
+    db_usuario_vehiculo_servicio = models.vehicle_services_model.VehicleService(
+        user_id=,
+        vehicle_id=usuario_vehiculo_servicio.vehiculo_Id,
+        service_id=usuario_vehiculo_servicio.servicio_Id,
+        created_at=usuario_vehiculo_servicio.fecha_registro
     )
-    db.add(db_role)
+    db.add(db_usuario_vehiculo_servicio)
     db.commit()
-    db.refresh(db_role)
-    return db_role
+    db.refresh(db_usuario_vehiculo_servicio)
+    return db_usuario_vehiculo_servicio
 
-def update_role(db:Session, id:int,rol:schemas.role_schema.RoleUpdate):
-    db_role=db.query()
+def update_usuario_vehiculo_servicio(db: Session, usuario_vehiculo_servicio_id: int, usuario_vehiculo_servicio: schemas.schema_usuario_vehiculo_servicio.Usuario_Vehiculo_ServicioUpdate):
+    '''Función para actualizar un usuario_vehiculo_servicio existente'''
+    db_usuario_vehiculo_servicio = db.query(models.model_usuario_vehiculo_servicio.Usuario_Vehiculo_Servicio).filter(models.model_usuario_vehiculo_servicio.Usuario_Vehiculo_Servicio.Id == usuario_vehiculo_servicio_id).first()
+    if db_usuario_vehiculo_servicio is None:
+        return None
+    db_usuario_vehiculo_servicio.usuario_Id = usuario_vehiculo_servicio.usuario_Id
+    db_usuario_vehiculo_servicio.vehiculo_Id = usuario_vehiculo_servicio.vehiculo_Id
+    db_usuario_vehiculo_servicio.servicio_Id = usuario_vehiculo_servicio.servicio_Id
+    db_usuario_vehiculo_servicio.fecha_registro = usuario_vehiculo_servicio.fecha_registro
+    db.commit()
+    db.refresh(db_usuario_vehiculo_servicio)
+    return db_usuario_vehiculo_servicio
+
+def delete_usuario_vehiculo_servicio(db: Session, usuario_vehiculo_servicio_id: int):
+    '''Función para eliminar un usuario_vehiculo_servicio por su ID'''
+    db_usuario_vehiculo_servicio = db.query(models.model_usuario_vehiculo_servicio.Usuario_Vehiculo_Servicio).filter(models.model_usuario_vehiculo_servicio.Usuario_Vehiculo_Servicio.Id == usuario_vehiculo_servicio_id).first()
+    if db_usuario_vehiculo_servicio is None:
+        return None
+    db.delete(db_usuario_vehiculo_servicio)
+    db.commit()
+    return db_usuario_vehiculo_servicio
+

@@ -4,11 +4,11 @@ from pydantic import BaseModel
 
 class ServiceBase(BaseModel):
     ''' Clase para modelar los campos de tabla Services'''
-    nombre_servicio: str
-    descripcion: Optional[str] = None
-    precio: float
-    duración:int
-    estatus: bool
+    name: str
+    description: Optional[str] = None
+    price: float
+    duration:int
+    is_active: bool
     created_at: datetime
     updated_at: datetime
 
