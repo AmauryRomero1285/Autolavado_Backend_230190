@@ -1,5 +1,6 @@
 '''Docstring for schema.vehicle_schema'''
 from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel
 
 class VehicleBase(BaseModel):
@@ -8,7 +9,11 @@ class VehicleBase(BaseModel):
     marca: str
     modelo: str
     color: str
-    client_id: int
+    tipo:str
+    anio: str
+    is_active:bool
+    created_at:datetime
+    updated_at:datetime
 
 class VehicleCreate(VehicleBase):
     ''' Clase para crear un Vehiculo '''

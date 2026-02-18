@@ -1,5 +1,5 @@
 '''Docstring for schema.services_schema'''
-from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel
 
 class ServiceBase(BaseModel):
@@ -7,7 +7,10 @@ class ServiceBase(BaseModel):
     nombre_servicio: str
     descripcion: Optional[str] = None
     precio: float
+    duración:int
     estatus: bool
+    created_at: datetime
+    updated_at: datetime
 
 class ServiceCreate(ServiceBase):
     ''' Clase para crear un Servicio '''

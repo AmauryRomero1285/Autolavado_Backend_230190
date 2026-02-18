@@ -7,7 +7,8 @@ class VehicleServiceBase(BaseModel):
     ''' Clase para modelar la relación entre vehiculos y servicios '''
     vehicle_id: int
     service_id: int
-    fecha_servicio: datetime
+    created_at: datetime
+    updated_at:datetime
     observaciones: Optional[str] = None
 
 class VehicleServiceCreate(VehicleServiceBase):
