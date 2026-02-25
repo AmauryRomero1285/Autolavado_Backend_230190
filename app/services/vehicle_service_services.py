@@ -6,38 +6,36 @@ def get_vehicle_service(db: Session, skip: int = 0, limit: int = 10):
     '''Función para obtener un usuario_vehiculo_servicio por su ID'''
     return db.query(models.vehicle_services_model.VehicleService).offset(skip).limit(limit).all()
 
-def create_vehicle_service(db: Session, vehicule_service: schemas.vehicle_services_schema.VehicleServiceCreate):
+def create_vehicle_service(db: Session, vehicle_service: schemas.vehicle_services_schema.VehicleServiceCreate):
     '''Función para crear un nuevo usuario_vehiculo_servicio'''
-    db_usuario_vehiculo_servicio = models.vehicle_services_model.VehicleService(
-        user_id=,
-        vehicle_id=usuario_vehiculo_servicio.vehiculo_Id,
-        service_id=usuario_vehiculo_servicio.servicio_Id,
-        created_at=usuario_vehiculo_servicio.fecha_registro
+    db_vehicle_service = models.vehicle_services_model.VehicleService(
+        vehicle_id=vehicle_service.vehicle_id,
+        service_id=vehicle_service.service_id,
+        created_at=vehicle_service.created_at
     )
-    db.add(db_usuario_vehiculo_servicio)
+    db.add(db_vehicle_service)
     db.commit()
-    db.refresh(db_usuario_vehiculo_servicio)
-    return db_usuario_vehiculo_servicio
+    db.refresh(db_vehicle_service)
+    return db_vehicle_service
 
-def update_usuario_vehiculo_servicio(db: Session, usuario_vehiculo_servicio_id: int, usuario_vehiculo_servicio: schemas.schema_usuario_vehiculo_servicio.Usuario_Vehiculo_ServicioUpdate):
+def update_vehicle_service(db: Session, id: int, vehicle_service: schemas.vehicle_services_schema.VehicleServiceUpdate):
     '''Función para actualizar un usuario_vehiculo_servicio existente'''
-    db_usuario_vehiculo_servicio = db.query(models.model_usuario_vehiculo_servicio.Usuario_Vehiculo_Servicio).filter(models.model_usuario_vehiculo_servicio.Usuario_Vehiculo_Servicio.Id == usuario_vehiculo_servicio_id).first()
-    if db_usuario_vehiculo_servicio is None:
+    db_vehicle_service= db.query(models.vehicle_services_model.VehicleService).filter(models.vehicle_services_model.VehicleService.id==id).first()
+    if db_vehicle_service is None:
         return None
-    db_usuario_vehiculo_servicio.usuario_Id = usuario_vehiculo_servicio.usuario_Id
-    db_usuario_vehiculo_servicio.vehiculo_Id = usuario_vehiculo_servicio.vehiculo_Id
-    db_usuario_vehiculo_servicio.servicio_Id = usuario_vehiculo_servicio.servicio_Id
-    db_usuario_vehiculo_servicio.fecha_registro = usuario_vehiculo_servicio.fecha_registro
+    db_vehicle_service.vehicle_id = vehicle_service.vehicle_id
+    db_vehicle_service.servicio_Id = vehicle_service.service_id
+    db_vehicle_service.fecha_registro = vehicle_service.created_at
     db.commit()
-    db.refresh(db_usuario_vehiculo_servicio)
-    return db_usuario_vehiculo_servicio
+    db.refresh(db_vehicle_service)
+    return db_vehicle_service
 
-def delete_usuario_vehiculo_servicio(db: Session, usuario_vehiculo_servicio_id: int):
+def delete_usuario_vehiculo_servicio(db: Session, id: int):
     '''Función para eliminar un usuario_vehiculo_servicio por su ID'''
-    db_usuario_vehiculo_servicio = db.query(models.model_usuario_vehiculo_servicio.Usuario_Vehiculo_Servicio).filter(models.model_usuario_vehiculo_servicio.Usuario_Vehiculo_Servicio.Id == usuario_vehiculo_servicio_id).first()
-    if db_usuario_vehiculo_servicio is None:
+    db_vehicle_services = db.query(models.vehicle_services_model.VehicleService).filter(models.vehicle_services_model.VehicleService.id == id).first()
+    if db_vehicle_services is None:
         return None
-    db.delete(db_usuario_vehiculo_servicio)
+    db.delete(db_vehicle_services)
     db.commit()
-    return db_usuario_vehiculo_servicio
+    return db_vehicle_services
 
