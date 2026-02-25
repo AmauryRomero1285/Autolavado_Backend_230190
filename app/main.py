@@ -16,3 +16,4 @@ app=FastAPI(
 )
 
 database.db.Base.metadata.create_all(bind=database.db.engine)
+

@@ -1,25 +1,43 @@
-import models.role_model
-import schemas.role_schema
-
+import models.user_model
+import schemas.user_schema
 from sqlalchemy.orm import Session
 
-def get_rol(db:Session, skip: int =0, limit:int=10):
-    return db.query(models.role_model.Role).offset(skip).limit(limit).all()
-    
-def get_rol_by_name(db:Session,name:str):
-    return db.query(models.role_model.Role).filter(models.role_model.Role.name == name).first()
+def get_user(db: Session, skip: int = 0, limit: int = 10):
+    '''Función para obtener un usuario por su ID'''
+    return db.query(models.user_model.User).offset(skip).limit(limit).all()
 
-def create_rol(db:Session, role:schemas.role_schema.RolCreate):
-    db_role=models.role_model.Role(
-        name=role.name,
-        is_active=role.is_active,
-        created_at=role.created_at,
-        updated_at=role.updated_at
+def create_user(db: Session, user: schemas.user_schema.UserCreate):
+    '''Función para crear un nuevo usuario'''
+    db_user = models.user_model.User(
+        name=user.first_name,
+        email=user.email,
+        password=user.password,
+        is_active=user.is_active
     )
-    db.add(db_role)
+    db.add(db_user)
     db.commit()
-    db.refresh(db_role)
-    return db_role
+    db.refresh(db_user)
+    return db_user
 
-def update_role(db:Session, id:int,rol:schemas.role_schema.RoleUpdate):
-    db_role=db.query()
+def update_user(db: Session, id: int, user: schemas.user_schema.UserUpdate):
+    '''Función para actualizar un usuario existente'''
+    db_user = db.query(models.user_model.User).filter(models.user_model.User.id == id).first()
+    if db_user is None:
+        return None
+    db_user.name = user.first_name
+    db_user.email = user.email
+    db_user.password = user.password
+    db_user.is_active = user.is_active
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def delete_user(db: Session, id: int):
+    '''Función para eliminar un usuario por su ID'''
+    db_user = db.query(models.user_model.User).filter(models.user_model.User.id == id).first()
+    if db_user is None:
+        return None
+    db.delete(db_user)
+    db.commit()
+    return db_user
+
