@@ -24,7 +24,7 @@ pwd_context = CryptContext(
     deprecated="auto"
 )
 
-def hash_password(password: str) -> str:
+def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 # Función para verificar la contraseña

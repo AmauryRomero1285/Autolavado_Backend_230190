@@ -8,6 +8,29 @@ from app.core.security import verify_password, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+@router.post("/register", response_model=schemas.UserRead, status_code=status.HTTP_201_CREATED)
+def register(
+    user_in: schemas.UserCreate,
+    db: DBSession,
+):
+    """
+    Registrar un nuevo usuario (Cliente).
+    """
+    # 1. Verificar si el email ya existe
+    user = crud.user.get_by_email(db, email=user_in.email)
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="Este correo electrónico ya está registrado.",
+        )
+    
+    # 2. Verificar si el teléfono ya existe (si aplica)
+    # user_phone = crud.user.get_by_phone(db, phone=user_in.phone_number)
+    
+    # 3. Crear el usuario usando tu CRUD
+    new_user = crud.user.create(db, obj_in=user_in)
+    return new_user
+
 
 @router.post("/login", response_model=schemas.Token)
 def login(

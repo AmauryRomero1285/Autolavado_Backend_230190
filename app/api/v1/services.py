@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 
 from app import crud, schemas
-from app.api.v1.deps import DBSession, get_current_admin
+from app.api.v1.deps import DBSession, get_current_admin, get_current_staff
 
 router = APIRouter(prefix="/services", tags=["services"])
 
@@ -13,7 +13,7 @@ def get_services(
     db: DBSession,
     skip: int = 0,
     limit: int = 100,
-    current_user=Depends(get_current_employee_or_admin),  # empleados también pueden ver
+    current_user=Depends(get_current_staff),  # empleados también pueden ver
 ):
     return crud.service.get_services(db, skip=skip, limit=limit)
 
