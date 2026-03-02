@@ -1,43 +1,52 @@
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
-import config.db, services.service_services,  schemas.services_schema, models.services_model
+# app/api/v1/services.py
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 
+from app import crud, schemas
+from app.api.v1.deps import DBSession, get_current_admin
 
-servicio = APIRouter()
+router = APIRouter(prefix="/services", tags=["services"])
 
-models.modelServicio.Base.metadata.create_all(bind=config.db.engine)   
-def get_db():
-    db = config.db.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-@servicio.get("/servicio/", response_model=List[schemas.schema_servicio.Servicio], tags=["Servicio"])        
-async def read_servicio(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    '''Función para obtener un servicio por su ID'''
-    db_servicio = crud.crud_servicio.get_servicio(db, skip=skip, limit=limit)
-    return db_servicio  
 
-@servicio.post("/servicio/", response_model=schemas.schema_servicio.Servicio, tags=["Servicio"])
-async def create_servicio(servicio: schemas.schema_servicio.ServicioCreate, db: Session = Depends(get_db)):
-    '''Función para crear un nuevo servicio'''
-    db_servicio = crud.crud_servicio.create_servicio(db=db, servicio=servicio)
-    return db_servicio
+@router.get("/", response_model=List[schemas.ServiceRead])
+def get_services(
+    db: DBSession,
+    skip: int = 0,
+    limit: int = 100,
+    current_user=Depends(get_current_employee_or_admin),  # empleados también pueden ver
+):
+    return crud.service.get_services(db, skip=skip, limit=limit)
 
-@servicio.delete("/servicio/{servicio_id}", tags=["Servicio"])
-async def delete_servicio(servicio_id: int, db: Session = Depends(get_db)):
-    '''Función para eliminar un servicio por su ID'''
-    db_servicio = crud.crud_servicio.delete_servicio(db=db, servicio_id=servicio_id)
-    if db_servicio is None:
+
+@router.post("/", response_model=schemas.ServiceRead, status_code=201)
+def create_service(
+    service_in: schemas.ServiceCreate,
+    db: DBSession,
+    current_user=Depends(get_current_admin),
+):
+    return crud.service.create_service(db, service_in=service_in)
+
+
+@router.patch("/{service_id}", response_model=schemas.ServiceRead)
+def update_service(
+    service_id: int,
+    service_in: schemas.ServiceUpdate,
+    db: DBSession,
+    current_user=Depends(get_current_admin),
+):
+    service = crud.service.update_service(db, service_id=service_id, service_in=service_in)
+    if not service:
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
-    return {"detail": "Servicio eliminado exitosamente"}
+    return service
 
-@servicio.put("/servicio/{servicio_id}", response_model=schemas.schema_servicio.Servicio, tags=["Servicio"])
-async def update_servicio(servicio_id: int, servicio: schemas.schema_servicio.ServicioUpdate, db: Session = Depends(get_db)):
-    '''Función para actualizar un servicio por su ID'''
-    db_servicio = crud.crud_servicio.update_servicio(db=db, servicio_id=servicio_id, servicio=servicio)
-    if db_servicio is None:
+
+@router.delete("/{service_id}")
+def delete_service(
+    service_id: int,
+    db: DBSession,
+    current_user=Depends(get_current_admin),
+):
+    result = crud.service.delete_service(db, service_id=service_id)
+    if not result:
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
-    return db_servicio
-
+    return {"detail": "Servicio eliminado"}
