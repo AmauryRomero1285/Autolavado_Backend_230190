@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 
 from app import crud, schemas
-from app.api.v1.deps import get_current_active_user, DBSession
+from app.api.v1.deps import get_current_active_user,get_current_admin, DBSession
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -14,8 +14,12 @@ def get_users(
     db: DBSession,
     skip: int = 0,
     limit: int = 100,
-    current_user=Depends(get_current_active_user),
+    # Cambiamos a get_current_admin para restringir el acceso
+    current_user=Depends(get_current_admin), 
 ):
+    """
+    Solo los administradores pueden listar todos los usuarios.
+    """
     return crud.user.get_users(db, skip=skip, limit=limit)
 
 

@@ -13,4 +13,4 @@ class Role(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     
-    #users = relationship("User", back_populates="role")
+    users = relationship("User", back_populates="role")

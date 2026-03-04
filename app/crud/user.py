@@ -17,17 +17,25 @@ def get_user_by_email(db: Session, email: str):
 
 def create_user(db: Session, user_in: schemas.UserCreate):
     hashed_password = get_password_hash(user_in.password)
+    
+    default_role = db.query(models.Role).filter(models.Role.name == "admin").first()
+    
+    if not default_role:
+        raise ValueError("El rol predeterminado 'user' no existe en la base de datos")
+
     db_user = models.User(
-        role_id=user_in,
         username=user_in.username,
         email=user_in.email,
         password_hash=hashed_password,
         phone_number=user_in.phone_number,
+        role_id=default_role.id
     )
+    
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
+
 
 
 def update_user(db: Session, user_id: int, user_in: schemas.UserUpdate):

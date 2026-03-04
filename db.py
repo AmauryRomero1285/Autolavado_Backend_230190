@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 # 1. Corregido: mysql+pymysql para que SQLAlchemy sepa qué driver usar
 # 2. Asegúrate que la DB "autolavadoDB" ya esté creada en tu MySQL
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://lavado_app:pepe1234@127.0.0.1:3306/autolavadodb"
+SQLALCHEMY_DATABASE_URL = "mysql+pymysql://lavado_app:pepe1234@127.0.0.1:3307/autolavadodb"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,

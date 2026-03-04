@@ -26,5 +26,5 @@ class Client(Base):
         "Vehicle",
         back_populates="client",
         cascade="all, delete-orphan",
-        passive_deletes=True,       # buena práctica con delete-orphan
-    )
+        passive_deletes=True,      
+    )                                                   

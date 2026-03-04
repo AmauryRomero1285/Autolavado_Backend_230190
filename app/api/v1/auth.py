@@ -55,3 +55,16 @@ def login(
 
     access_token = create_access_token(data={"sub": str(user.id)})
     return schemas.Token(access_token=access_token, token_type="bearer")
+
+@router.post("/logout")
+def logout(token: str = Depends(oauth2_scheme), db: DBSession = Depends(get_db)):
+    # Lógica para guardar el token en una tabla de 'invalid_tokens'
+    crud.auth.blacklist_token(db, token)
+    return {"message": "Sesión cerrada exitosamente"}
+
+# app/api/v1/deps.py (Ajuste)
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: DBSession):
+    # NUEVO: Verificar si el token fue invalidado
+    if crud.auth.is_token_blacklisted(db, token):
+        raise HTTPException(status_code=401, detail="Token revocado")
+    # ... resto de tu lógica de decode

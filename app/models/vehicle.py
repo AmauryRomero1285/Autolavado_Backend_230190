@@ -24,5 +24,5 @@ class Vehicle(Base):
     client = relationship(
         "Client",
         back_populates="vehicles",
-        lazy="joined",           # o "selectin" si prefieres lazy loading
+        lazy="joined",       
     )

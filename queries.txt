@@ -1,9 +1,7 @@
 CREATE DATABASE IF NOT EXISTS autolavadodb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE USER 'lavado_app'@'localhost' IDENTIFIED BY 'pepe1234';
-
+CREATE USER IF NOT EXISTS 'lavado_app'@'localhost' IDENTIFIED BY 'pepe1234';
 GRANT ALL PRIVILEGES ON autolavadodb.* TO 'lavado_app'@'localhost';
-
 FLUSH PRIVILEGES;
 
 USE autolavadodb;
@@ -12,7 +10,7 @@ USE autolavadodb;
 CREATE TABLE roles (
     id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
     name            VARCHAR(60)     NOT NULL,
-    is_active       TINYINT(1)      NOT NULL    DEFAULT 1,
+    is_active       BOOL            DEFAULT TRUE,
     created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -20,6 +18,9 @@ CREATE TABLE roles (
     UNIQUE  KEY uk_role_name (name)
 );
 
+-- Insertar rol por defecto para que funcione el create_user de Python
+INSERT INTO roles (name, is_active) VALUES ('user', TRUE);
+INSERT INTO roles (name, is_active) VALUES ('admin', TRUE);
 
 -- 2. Tabla users
 CREATE TABLE users (
@@ -33,7 +34,7 @@ CREATE TABLE users (
     second_last_name VARCHAR(60)                DEFAULT NULL,
     phone_number    VARCHAR(20)                 DEFAULT NULL,
     address         VARCHAR(255)                DEFAULT NULL,
-    is_active       BOOL                        DEFAULT NULL,
+    is_active       BOOL                        DEFAULT TRUE,
     created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -48,8 +49,21 @@ CREATE TABLE users (
         ON UPDATE CASCADE
 );
 
+-- 3. Tabla productos (Nueva)
+CREATE TABLE products (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    name            VARCHAR(120)    NOT NULL,
+    description     TEXT,
+    stock           INT             DEFAULT 0,
+    price           DECIMAL(10,2)   NOT NULL,
+    is_active       BOOL            DEFAULT TRUE,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id)
+);
 
--- 3. Tabla clients
+-- 4. Tabla clients
 CREATE TABLE clients (
     id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
     user_id         INT             UNSIGNED                DEFAULT NULL,
@@ -58,7 +72,7 @@ CREATE TABLE clients (
     phone_number    VARCHAR(20)     NOT NULL,
     email           VARCHAR(120)                DEFAULT NULL,
     notes           VARCHAR(500)                DEFAULT NULL,
-    is_active       BOOL                        DEFAULT NULL,
+    is_active       BOOL                        DEFAULT TRUE,
     created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -73,8 +87,7 @@ CREATE TABLE clients (
         ON UPDATE CASCADE
 );
 
-
--- 4. Tabla vehicles
+-- 5. Tabla vehicles
 CREATE TABLE vehicles (
     id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
     client_id       INT             UNSIGNED    NOT NULL,
@@ -84,7 +97,7 @@ CREATE TABLE vehicles (
     year            SMALLINT        UNSIGNED            DEFAULT NULL,
     color           VARCHAR(50)                 DEFAULT NULL,
     vehicle_type    VARCHAR(50)                 DEFAULT NULL,
-	is_active       BOOL                        DEFAULT NULL,
+	is_active       BOOL                        DEFAULT TRUE,
     created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -98,15 +111,14 @@ CREATE TABLE vehicles (
         ON UPDATE CASCADE
 );
 
-
--- 5. Tabla services
+-- 6. Tabla services
 CREATE TABLE services (
     id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
     name            VARCHAR(120)    NOT NULL,
     description     VARCHAR(500)                DEFAULT NULL,
     price           DECIMAL(10,2)   NOT NULL,
     duration_minutes SMALLINT       UNSIGNED    NOT NULL,
-    is_active       BOOL                        DEFAULT NULL,
+    is_active       BOOL                        DEFAULT TRUE,
     created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -114,6 +126,7 @@ CREATE TABLE services (
     INDEX       idx_service_name  (name)
 );
 
+-- 7. Tabla intermedia vehiculo_servicio
 CREATE TABLE vehiculo_servicio (
     id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
     vehicle_id      INT             UNSIGNED    NOT NULL,
@@ -130,7 +143,6 @@ CREATE TABLE vehiculo_servicio (
     updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     PRIMARY KEY (id),
-    UNIQUE  KEY uk_vehicle_service_once (vehicle_id, service_id, scheduled_at),
     INDEX       idx_vehicle_id    (vehicle_id),
     INDEX       idx_service_id    (service_id),
     INDEX       idx_cajero_id     (cajero_id),
