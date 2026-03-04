@@ -17,7 +17,7 @@ def register(
     Registrar un nuevo usuario (Cliente).
     """
     # 1. Verificar si el email ya existe
-    user = crud.user.get_by_email(db, email=user_in.email)
+    user = crud.user.get_user_by_email(db, email=user_in.email)
     if user:
         raise HTTPException(
             status_code=400,
@@ -27,8 +27,7 @@ def register(
     # 2. Verificar si el teléfono ya existe (si aplica)
     # user_phone = crud.user.get_by_phone(db, phone=user_in.phone_number)
     
-    # 3. Crear el usuario usando tu CRUD
-    new_user = crud.user.create(db, obj_in=user_in)
+    new_user = crud.user.create_user(db, user_in)     
     return new_user
 
 

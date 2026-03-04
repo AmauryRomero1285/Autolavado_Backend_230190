@@ -24,4 +24,4 @@ class User(Base):
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
 
     # Relación útil para consultas ORM
-    role = relationship("Role", back_populates="users", lazy="selectin")
+    #role = relationship("Role", back_populates="users", lazy="selectin")

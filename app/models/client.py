@@ -22,5 +22,9 @@ class Client(Base):
 
     vehicles = relationship("Vehicle", back_populates="client", cascade="all, delete-orphan")
     
-    # Si quieres:
-    appointments = relationship("Appointment", back_populates="client")
+    vehicles = relationship(
+        "Vehicle",
+        back_populates="client",
+        cascade="all, delete-orphan",
+        passive_deletes=True,       # buena práctica con delete-orphan
+    )

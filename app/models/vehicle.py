@@ -21,5 +21,8 @@ class Vehicle(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
 
-    # Relaciones útiles
-    client = relationship("Client", back_populates="vehicles", lazy="selectin")
+    client = relationship(
+        "Client",
+        back_populates="vehicles",
+        lazy="joined",           # o "selectin" si prefieres lazy loading
+    )

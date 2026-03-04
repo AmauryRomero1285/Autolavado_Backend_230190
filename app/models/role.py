@@ -1,5 +1,6 @@
 # models/role.py
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
+from sqlalchemy.orm import relationship
 from db import Base
 
 
@@ -11,3 +12,5 @@ class Role(Base):
     is_active = Column(Boolean, nullable=False, server_default="true", default=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    
+    #users = relationship("User", back_populates="role")

@@ -1,1 +1,1 @@
-from .user import 
+from .user import get_user, get_user_by_email

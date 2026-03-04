@@ -1,0 +1,147 @@
+CREATE DATABASE IF NOT EXISTS autolavadodb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE USER 'lavado_app'@'localhost' IDENTIFIED BY 'pepe1234';
+
+GRANT ALL PRIVILEGES ON autolavadodb.* TO 'lavado_app'@'localhost';
+
+FLUSH PRIVILEGES;
+
+USE autolavadodb;
+
+-- 1. Tabla roles
+CREATE TABLE roles (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    name            VARCHAR(60)     NOT NULL,
+    is_active       TINYINT(1)      NOT NULL    DEFAULT 1,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    UNIQUE  KEY uk_role_name (name)
+);
+
+
+-- 2. Tabla users
+CREATE TABLE users (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    role_id         INT             UNSIGNED    NOT NULL,
+    username        VARCHAR(60)     NOT NULL,
+    email           VARCHAR(120)    NOT NULL,
+    password_hash   VARCHAR(255)    NOT NULL,
+    first_name      VARCHAR(60)                 DEFAULT NULL,
+    last_name       VARCHAR(60)                 DEFAULT NULL,
+    second_last_name VARCHAR(60)                DEFAULT NULL,
+    phone_number    VARCHAR(20)                 DEFAULT NULL,
+    address         VARCHAR(255)                DEFAULT NULL,
+    is_active       BOOL                        DEFAULT NULL,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    UNIQUE  KEY uk_username     (username),
+    UNIQUE  KEY uk_email        (email),
+    INDEX       idx_role_id     (role_id),
+    
+    CONSTRAINT fk_users_role
+        FOREIGN KEY (role_id) REFERENCES roles(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+
+-- 3. Tabla clients
+CREATE TABLE clients (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    user_id         INT             UNSIGNED                DEFAULT NULL,
+    first_name      VARCHAR(60)     NOT NULL,
+    last_name       VARCHAR(60)     NOT NULL,
+    phone_number    VARCHAR(20)     NOT NULL,
+    email           VARCHAR(120)                DEFAULT NULL,
+    notes           VARCHAR(500)                DEFAULT NULL,
+    is_active       BOOL                        DEFAULT NULL,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    UNIQUE  KEY uk_phone_number (phone_number),
+    UNIQUE  KEY uk_client_user  (user_id),
+    INDEX       idx_email       (email),
+    
+    CONSTRAINT fk_clients_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
+
+
+-- 4. Tabla vehicles
+CREATE TABLE vehicles (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    client_id       INT             UNSIGNED    NOT NULL,
+    license_plate   VARCHAR(20)     NOT NULL,
+    brand           VARCHAR(60)     NOT NULL,
+    model           VARCHAR(100)    NOT NULL,
+    year            SMALLINT        UNSIGNED            DEFAULT NULL,
+    color           VARCHAR(50)                 DEFAULT NULL,
+    vehicle_type    VARCHAR(50)                 DEFAULT NULL,
+	is_active       BOOL                        DEFAULT NULL,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    UNIQUE  KEY uk_license_plate (license_plate),
+    INDEX       idx_client_id     (client_id),
+    
+    CONSTRAINT fk_vehicles_client
+        FOREIGN KEY (client_id) REFERENCES clients(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
+-- 5. Tabla services
+CREATE TABLE services (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    name            VARCHAR(120)    NOT NULL,
+    description     VARCHAR(500)                DEFAULT NULL,
+    price           DECIMAL(10,2)   NOT NULL,
+    duration_minutes SMALLINT       UNSIGNED    NOT NULL,
+    is_active       BOOL                        DEFAULT NULL,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    INDEX       idx_service_name  (name)
+);
+
+CREATE TABLE vehiculo_servicio (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    vehicle_id      INT             UNSIGNED    NOT NULL,
+    service_id      INT             UNSIGNED    NOT NULL,
+    cajero_id       INT             UNSIGNED                DEFAULT NULL,
+    operativo_id    INT             UNSIGNED                DEFAULT NULL,
+    status          VARCHAR(30)     NOT NULL    DEFAULT 'pendiente',
+    scheduled_at    DATETIME                    DEFAULT NULL,
+    started_at      DATETIME                    DEFAULT NULL,
+    finished_at     DATETIME                    DEFAULT NULL,
+    total_price     DECIMAL(10,2)               DEFAULT NULL,
+    notes           TEXT                        DEFAULT NULL,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    UNIQUE  KEY uk_vehicle_service_once (vehicle_id, service_id, scheduled_at),
+    INDEX       idx_vehicle_id    (vehicle_id),
+    INDEX       idx_service_id    (service_id),
+    INDEX       idx_cajero_id     (cajero_id),
+    INDEX       idx_operativo_id  (operativo_id),
+    
+    CONSTRAINT fk_vs_vehicle
+        FOREIGN KEY (vehicle_id)   REFERENCES vehicles(id)   ON DELETE CASCADE   ON UPDATE CASCADE,
+    CONSTRAINT fk_vs_service
+        FOREIGN KEY (service_id)   REFERENCES services(id)   ON DELETE RESTRICT  ON UPDATE CASCADE,
+    CONSTRAINT fk_vs_cajero
+        FOREIGN KEY (cajero_id)    REFERENCES users(id)      ON DELETE SET NULL  ON UPDATE CASCADE,
+    CONSTRAINT fk_vs_operativo
+        FOREIGN KEY (operativo_id) REFERENCES users(id)      ON DELETE SET NULL  ON UPDATE CASCADE
+);
