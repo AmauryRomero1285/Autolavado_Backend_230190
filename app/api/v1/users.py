@@ -25,13 +25,23 @@ def get_users(
 
 @router.post("/", response_model=schemas.UserRead, status_code=201)
 def create_user(
-    user_in: schemas.UserCreate,
+    *,
     db: DBSession,
-    current_user=Depends(get_current_active_user),
+    user_in: schemas.UserCreate,
+    current_user=Depends(get_current_admin), # Solo admins entran aquí
 ):
+    
     if crud.user.get_user_by_email(db, email=user_in.email):
-        raise HTTPException(status_code=400, detail="El email ya está registrado")
-    return crud.user.create_user(db, user_in=user_in)
+        raise HTTPException(status_code=400, detail="El correo ya existe")
+
+    role_to_assign = user_in.role_id if user_in.role_id else 3
+
+    return crud.user.create_user(
+        db, 
+        user_in=user_in, 
+        role_id=role_to_assign
+    )
+
 
 
 @router.get("/me", response_model=schemas.UserRead)

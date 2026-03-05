@@ -44,3 +44,12 @@ def delete_service(db: Session, service_id: int):
     db.delete(db_service)
     db.commit()
     return {"ok": True}
+
+class CRUDService:
+    get_services = staticmethod(get_services)
+    get_service = staticmethod(get_service)
+    create_service = staticmethod(create_service)
+    update_service = staticmethod(update_service)
+    delete_service = staticmethod(delete_service)
+
+service = CRUDService() 

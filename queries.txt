@@ -127,33 +127,60 @@ CREATE TABLE services (
 );
 
 -- 7. Tabla intermedia vehiculo_servicio
+USE autolavadodb;
+
+-- 1. Agregamos las columnas a la tabla existente
+ALTER TABLE vehiculo_servicio 
+ADD COLUMN service_price DECIMAL(10,2) DEFAULT NULL AFTER finished_at,
+ADD COLUMN discount      DECIMAL(10,2) DEFAULT 0.00 AFTER service_price;
+
+-- 2. (Opcional) Si quieres recrear la tabla desde cero con el orden correcto:
+DROP TABLE IF EXISTS vehiculo_servicio;
+
 CREATE TABLE vehiculo_servicio (
     id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
     vehicle_id      INT             UNSIGNED    NOT NULL,
     service_id      INT             UNSIGNED    NOT NULL,
-    cajero_id       INT             UNSIGNED                DEFAULT NULL,
-    operativo_id    INT             UNSIGNED                DEFAULT NULL,
+    employee_casher_id INT          UNSIGNED    DEFAULT NULL,
+    employee_washer_id INT          UNSIGNED    DEFAULT NULL,
     status          VARCHAR(30)     NOT NULL    DEFAULT 'pendiente',
     scheduled_at    DATETIME                    DEFAULT NULL,
     started_at      DATETIME                    DEFAULT NULL,
     finished_at     DATETIME                    DEFAULT NULL,
-    total_price     DECIMAL(10,2)               DEFAULT NULL,
+    
+    -- Nuevas columnas de precios
+    service_price   DECIMAL(10,2)               DEFAULT NULL, -- Precio base del catálogo
+    discount        DECIMAL(10,2)               DEFAULT 0.00, -- Monto a descontar
+    total_price     DECIMAL(10,2)               DEFAULT NULL, -- Precio final (base - descuento)
+    
     notes           TEXT                        DEFAULT NULL,
     created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     PRIMARY KEY (id),
-    INDEX       idx_vehicle_id    (vehicle_id),
-    INDEX       idx_service_id    (service_id),
-    INDEX       idx_cajero_id     (cajero_id),
-    INDEX       idx_operativo_id  (operativo_id),
+    CONSTRAINT fk_vs_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
+    CONSTRAINT fk_vs_service FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_vs_casher  FOREIGN KEY (employee_casher_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_vs_washer  FOREIGN KEY (employee_washer_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- 1. Crear la tabla de sesiones con las especificaciones de tu esquema
+CREATE TABLE user_sessions (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    user_id         INT             UNSIGNED    NOT NULL,
+    token           VARCHAR(500)   NOT NULL, -- Tamaño amplio para JWT
+    is_active       BOOL            DEFAULT TRUE,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    CONSTRAINT fk_vs_vehicle
-        FOREIGN KEY (vehicle_id)   REFERENCES vehicles(id)   ON DELETE CASCADE   ON UPDATE CASCADE,
-    CONSTRAINT fk_vs_service
-        FOREIGN KEY (service_id)   REFERENCES services(id)   ON DELETE RESTRICT  ON UPDATE CASCADE,
-    CONSTRAINT fk_vs_cajero
-        FOREIGN KEY (cajero_id)    REFERENCES users(id)      ON DELETE SET NULL  ON UPDATE CASCADE,
-    CONSTRAINT fk_vs_operativo
-        FOREIGN KEY (operativo_id) REFERENCES users(id)      ON DELETE SET NULL  ON UPDATE CASCADE
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_session_token (token),
+    INDEX idx_session_user (user_id),
+    
+    -- 2. FK vinculada a la tabla users (id es UNSIGNED)
+    CONSTRAINT fk_sessions_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );

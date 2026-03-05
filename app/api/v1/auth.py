@@ -1,52 +1,69 @@
-# app/api/v1/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordRequestForm 
+from typing import Annotated, Optional
 
-from app import crud, schemas
-from app.api.v1.deps import DBSession
+from app import crud, models, schemas
+from app.api.v1.deps import DBSession, oauth2_scheme, get_current_active_user_optional
 from app.core.security import verify_password, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+# app/api/v1/auth.py
+
 @router.post("/register", response_model=schemas.UserRead, status_code=status.HTTP_201_CREATED)
 def register(
-    user_in: schemas.UserCreate,
+    user_in: schemas.UserCreate, 
     db: DBSession,
+    current_user: Annotated[Optional[models.User], Depends(get_current_active_user_optional)] = None 
 ):
-    """
-    Registrar un nuevo usuario (Cliente).
-    """
     # 1. Verificar si el email ya existe
-    user = crud.user.get_user_by_email(db, email=user_in.email)
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="Este correo electrónico ya está registrado.",
+    if crud.user.get_user_by_email(db, email=user_in.email):
+        raise HTTPException(status_code=400, detail="Este correo ya está registrado.")
+
+    # 2. Lógica de ROL (ID 3 = User/Cliente según tu código)
+    DEFAULT_ROLE_ID = 3
+    final_role_id = DEFAULT_ROLE_ID
+
+    # 3. SEGURIDAD: Si el usuario envía un role_id diferente al default
+    if user_in.role_id and user_in.role_id != DEFAULT_ROLE_ID:
+        # Verificamos si el que hace la petición es REALMENTE un Admin
+        is_admin = (
+            current_user and 
+            current_user.role and 
+            current_user.role.name.lower() in ["admin", "administrador"]
         )
-    
-    # 2. Verificar si el teléfono ya existe (si aplica)
-    # user_phone = crud.user.get_by_phone(db, phone=user_in.phone_number)
-    
-    new_user = crud.user.create_user(db, user_in)     
-    return new_user
+        
+        if not is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permiso para asignar roles. Se asignará el rol por defecto."
+            )
+        
+        # Si es Admin, aceptamos el ID que envió
+        final_role_id = user_in.role_id
+
+    # 4. Crear el usuario con la FK role_id validada
+    return crud.user.create_user(db, user_in=user_in, role_id=final_role_id)
+
+
 
 
 @router.post("/login", response_model=schemas.Token)
 def login(
-    user_login: schemas.UserLogin,
     db: DBSession,
+    # Cambiamos UserLogin por OAuth2PasswordRequestForm para que funcione el botón de Swagger
+    form_data: OAuth2PasswordRequestForm = Depends() 
 ):
-    """Login con email o teléfono (identifier)"""
-    # Buscar por email o por teléfono
-    user = crud.user.get_user_by_email(db, email=user_login.identifier)
+    """Login compatible con Swagger y persistencia de sesión"""
+    # Swagger envía el email/teléfono en form_data.username
+    user = crud.user.get_user_by_email(db, email=form_data.username)
+    
     if not user:
-        # Intentar por teléfono (si el identifier es numérico)
-        if user_login.identifier.replace("+", "").isdigit():
-            user = db.query(crud.models.User).filter(
-                crud.models.User.phone_number == user_login.identifier
-            ).first()
+        # Intento por teléfono si el username es numérico
+        if form_data.username.replace("+", "").isdigit():
+            user = crud.user.get_by_phone(db, phone=form_data.username)
 
-    if not user or not verify_password(user_login.password, user.password_hash):
+    if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas",
@@ -54,17 +71,18 @@ def login(
         )
 
     access_token = create_access_token(data={"sub": str(user.id)})
+
+    # --- Registrar la sesión en la base de datos ---
+    crud.auth.create_session(db, user_id=user.id, token=access_token)
+    
     return schemas.Token(access_token=access_token, token_type="bearer")
 
 @router.post("/logout")
-def logout(token: str = Depends(oauth2_scheme), db: DBSession = Depends(get_db)):
-    # Lógica para guardar el token en una tabla de 'invalid_tokens'
-    crud.auth.blacklist_token(db, token)
+def logout(db: DBSession, token: str = Depends(oauth2_scheme)):
+    """Invalida el token en la tabla user_sessions"""
+    # Cambiamos el booleano is_active a False en la DB
+    success = crud.auth.deactivate_session(db, token=token)
+    if not success:
+        raise HTTPException(status_code=404, detail="Token no encontrado o ya invalidado")
+    
     return {"message": "Sesión cerrada exitosamente"}
-
-# app/api/v1/deps.py (Ajuste)
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: DBSession):
-    # NUEVO: Verificar si el token fue invalidado
-    if crud.auth.is_token_blacklisted(db, token):
-        raise HTTPException(status_code=401, detail="Token revocado")
-    # ... resto de tu lógica de decode

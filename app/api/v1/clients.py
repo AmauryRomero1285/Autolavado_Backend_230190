@@ -24,7 +24,7 @@ def create_client(
     db: DBSession,
     current_user=Depends(get_current_staff),
 ):
-    if crud.client.get_client_by_phone(db, phone=client_in.phone_number):
+    if crud.client.get_client_by_phone(db, phone_number=client_in.phone_number):
         raise HTTPException(status_code=400, detail="Ya existe un cliente con ese teléfono")
     return crud.client.create_client(db, client_in=client_in)
 

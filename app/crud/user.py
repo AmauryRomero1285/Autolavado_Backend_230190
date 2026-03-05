@@ -15,20 +15,32 @@ def get_user_by_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
 
-def create_user(db: Session, user_in: schemas.UserCreate):
+def get_user_by_id(db: Session, user_id: int):
+    """
+    Busca un usuario por su ID primario.
+    """
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+
+def create_user(db: Session, user_in: schemas.UserCreate, role_id: int):
     hashed_password = get_password_hash(user_in.password)
     
-    default_role = db.query(models.Role).filter(models.Role.name == "admin").first()
+    default_role = db.query(models.Role).filter(models.Role.name == "user").first()
     
     if not default_role:
         raise ValueError("El rol predeterminado 'user' no existe en la base de datos")
 
     db_user = models.User(
-        username=user_in.username,
         email=user_in.email,
-        password_hash=hashed_password,
+        username=user_in.username,
+        password_hash=get_password_hash(user_in.password),
+        role_id=role_id, # Aquí asignamos la FK
+        first_name=user_in.first_name,
+        last_name=user_in.last_name,
+        second_last_name=user_in.second_last_name,
+        address=user_in.address,
         phone_number=user_in.phone_number,
-        role_id=default_role.id
+        is_active=True
     )
     
     db.add(db_user)
