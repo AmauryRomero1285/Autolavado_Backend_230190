@@ -9,7 +9,7 @@ def get_cashier_report_by_id(db: Session, vs_id: int):
     # Alias para los trabajadores (lavador y cajero) y el usuario final (cliente)
     Washer = aliased(User)
     Casher = aliased(User)
-    UserClient = aliased(User)
+    ClientOwner = aliased(User)
 
     return db.query(
         VehicleService.id,
@@ -29,7 +29,7 @@ def get_cashier_report_by_id(db: Session, vs_id: int):
         Vehicle.model.label("modelo"),
         Vehicle.color.label("color"),
         # Nombre del cliente obtenido a través del vehículo
-        UserClient.first_name.label("nombre-cliente"),
+        ClientOwner.first_name.label("nombre-cliente"),
         VehicleService.notes.label("notes")
     ).select_from(VehicleService)\
      .outerjoin(Washer, VehicleService.employee_washer_id == Washer.id)\
@@ -37,6 +37,6 @@ def get_cashier_report_by_id(db: Session, vs_id: int):
      .outerjoin(Service, VehicleService.service_id == Service.id)\
      .outerjoin(Vehicle, VehicleService.vehicle_id == Vehicle.id)\
      .outerjoin(ClientModel, Vehicle.client_id == ClientModel.id) \
-     .outerjoin(UserClient, ClientModel.user_id == UserClient.id) \
+     .outerjoin(ClientOwner, Vehicle.client_id == ClientOwner.id) \
      .filter(VehicleService.id == vs_id)\
      .first()
