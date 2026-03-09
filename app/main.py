@@ -1,19 +1,11 @@
 from fastapi import FastAPI
-import database.db
+from app.api.v1.main import api_router
 
-import models.client_model
-import models.role_model
-import models.services_model
-import models.user_model
-import app.models.vehicle_services_model
-import app.models.vehicle_model
+app = FastAPI(title="Autolavado API", version="1.0.0")
 
-from api.v1.role import role
+# Ruta de bienvenida
+@app.get("/")
+def home():
+    return {"message": "Bienvenido a la API de Autolavado", "docs": "/docs"}
 
-app=FastAPI(
-    title="Carwash system control",
-    description="System for creating, storing information and selling a car wash"
-)
-
-database.db.Base.metadata.create_all(bind=database.db.engine)
-
+app.include_router(api_router)

@@ -1,0 +1,197 @@
+CREATE DATABASE IF NOT EXISTS autolavadodb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE USER IF NOT EXISTS 'lavado_app'@'localhost' IDENTIFIED BY 'pepe1234';
+GRANT ALL PRIVILEGES ON autolavadodb.* TO 'lavado_app'@'localhost';
+FLUSH PRIVILEGES;
+
+USE autolavadodb;
+
+-- 1. Tabla roles
+CREATE TABLE roles (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    name            VARCHAR(60)     NOT NULL,
+    is_active       BOOL            DEFAULT TRUE,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    UNIQUE  KEY uk_role_name (name)
+);
+
+-- Insertar rol por defecto para que funcione el create_user de Python
+INSERT INTO roles (name, is_active) VALUES ('admin', TRUE);
+INSERT INTO roles (name, is_active) VALUES ('employee', TRUE);
+INSERT INTO roles (name, is_active) VALUES ('user', TRUE);
+
+-- 2. Tabla users
+CREATE TABLE users (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    role_id         INT             UNSIGNED    NOT NULL,
+    username        VARCHAR(60)     NOT NULL,
+    email           VARCHAR(120)    NOT NULL,
+    password_hash   VARCHAR(255)    NOT NULL,
+    first_name      VARCHAR(60)                 DEFAULT NULL,
+    last_name       VARCHAR(60)                 DEFAULT NULL,
+    second_last_name VARCHAR(60)                DEFAULT NULL,
+    phone_number    VARCHAR(20)                 DEFAULT NULL,
+    address         VARCHAR(255)                DEFAULT NULL,
+    is_active       BOOL                        DEFAULT TRUE,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    UNIQUE  KEY uk_username     (username),
+    UNIQUE  KEY uk_email        (email),
+    INDEX       idx_role_id     (role_id),
+    
+    CONSTRAINT fk_users_role
+        FOREIGN KEY (role_id) REFERENCES roles(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+-- 3. Tabla productos (Nueva)
+CREATE TABLE products (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    name            VARCHAR(120)    NOT NULL,
+    description     TEXT,
+    stock           INT             DEFAULT 0,
+    price           DECIMAL(10,2)   NOT NULL,
+    is_active       BOOL            DEFAULT TRUE,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id)
+);
+
+-- 4. Tabla clients
+CREATE TABLE clients (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    user_id         INT             UNSIGNED                DEFAULT NULL,
+    first_name      VARCHAR(60)     NOT NULL,
+    last_name       VARCHAR(60)     NOT NULL,
+    phone_number    VARCHAR(20)     NOT NULL,
+    email           VARCHAR(120)                DEFAULT NULL,
+    notes           VARCHAR(500)                DEFAULT NULL,
+    is_active       BOOL                        DEFAULT TRUE,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    UNIQUE  KEY uk_phone_number (phone_number),
+    UNIQUE  KEY uk_client_user  (user_id),
+    INDEX       idx_email       (email),
+    
+    CONSTRAINT fk_clients_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
+
+-- 5. Tabla vehicles
+CREATE TABLE vehicles (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    client_id       INT             UNSIGNED    NOT NULL,
+    license_plate   VARCHAR(20)     NOT NULL,
+    brand           VARCHAR(60)     NOT NULL,
+    model           VARCHAR(100)    NOT NULL,
+    year            SMALLINT        UNSIGNED            DEFAULT NULL,
+    color           VARCHAR(50)                 DEFAULT NULL,
+    vehicle_type    VARCHAR(50)                 DEFAULT NULL,
+	is_active       BOOL                        DEFAULT TRUE,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    UNIQUE  KEY uk_license_plate (license_plate),
+    INDEX       idx_client_id     (client_id),
+    
+    CONSTRAINT fk_vehicles_client
+        FOREIGN KEY (client_id) REFERENCES clients(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- 6. Tabla services
+CREATE TABLE services (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    name            VARCHAR(120)    NOT NULL,
+    description     VARCHAR(500)                DEFAULT NULL,
+    price           DECIMAL(10,2)   NOT NULL,
+    duration_minutes SMALLINT       UNSIGNED    NOT NULL,
+    is_active       BOOL                        DEFAULT TRUE,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    INDEX       idx_service_name  (name)
+);
+
+-- 7. Tabla intermedia vehiculo_servicio
+DROP TABLE IF EXISTS vehiculo_servicio;
+
+CREATE TABLE vehiculo_servicio (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    vehicle_id      INT             UNSIGNED    NOT NULL,
+    service_id      INT             UNSIGNED    NOT NULL,
+    employee_casher_id INT          UNSIGNED    DEFAULT NULL,
+    employee_washer_id INT          UNSIGNED    DEFAULT NULL,
+    status          VARCHAR(30)     NOT NULL    DEFAULT 'pendiente',
+    scheduled_at    DATETIME                    DEFAULT NULL,
+    started_at      DATETIME                    DEFAULT NULL,
+    finished_at     DATETIME                    DEFAULT NULL,
+    
+    -- Nuevas columnas de precios
+    service_price   DECIMAL(10,2)               DEFAULT NULL, -- Precio base del catálogo
+    discount        DECIMAL(10,2)               DEFAULT 0.00, -- Monto a descontar
+    total_price     DECIMAL(10,2)               DEFAULT NULL, -- Precio final (base - descuento)
+    
+    notes           TEXT                        DEFAULT NULL,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    CONSTRAINT fk_vs_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
+    CONSTRAINT fk_vs_service FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_vs_casher  FOREIGN KEY (employee_casher_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_vs_washer  FOREIGN KEY (employee_washer_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- 8. Tabla sesiones
+CREATE TABLE user_sessions (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    user_id         INT             UNSIGNED    NOT NULL,
+    token           VARCHAR(500)   NOT NULL, 
+    is_active       BOOL            DEFAULT TRUE,
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_session_token (token),
+    INDEX idx_session_user (user_id),
+    
+    -- 2. FK vinculada a la tabla users (id es UNSIGNED)
+    CONSTRAINT fk_sessions_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE inventory_movements (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    product_id      INT             UNSIGNED    NOT NULL,
+    quantity        DECIMAL(10,2)   NOT NULL,  
+    type            ENUM('IN', 'OUT') NOT NULL, 
+    reason          VARCHAR(50),               
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    INDEX idx_product (product_id),
+    
+    CONSTRAINT fk_inventory_product
+        FOREIGN KEY (product_id) REFERENCES products(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
