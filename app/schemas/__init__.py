@@ -10,7 +10,7 @@ from .user import (
     UserUpdate,
     UserRead,
     UserLogin,
-    Token,               # ← agrega esto
+    Token,             
 )
 
 from .role import RoleBase, RoleCreate, RoleUpdate, RoleRead, RoleMinimal
@@ -19,3 +19,4 @@ from .vehicle import VehicleBase, VehicleCreate, VehicleUpdate, VehicleRead, Veh
 from .services import ServiceBase,ServiceCreate,ServiceUpdate,ServiceRead,ServiceMinimal
 from .vehicle_service import VehicleServiceBase, VehicleServiceCreate, VehicleServiceUpdate, VehicleServiceRead
 from .products import ProductBase, ProductCreate, ProductUpdate, ProductRead, ProductMinimal 
+from .inventary_movements import InventoryBase, InventoryCreate, InventoryRead, InventoryUpdate

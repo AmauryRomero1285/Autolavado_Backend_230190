@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-from db import get_db # Asumiendo que tienes un generator para la sesión
+from db import get_db
 from app.schemas.products import ProductRead, ProductCreate, ProductUpdate
 from app.crud import products as crud_product
 

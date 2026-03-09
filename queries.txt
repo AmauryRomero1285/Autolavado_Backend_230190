@@ -19,8 +19,9 @@ CREATE TABLE roles (
 );
 
 -- Insertar rol por defecto para que funcione el create_user de Python
-INSERT INTO roles (name, is_active) VALUES ('user', TRUE);
 INSERT INTO roles (name, is_active) VALUES ('admin', TRUE);
+INSERT INTO roles (name, is_active) VALUES ('employee', TRUE);
+INSERT INTO roles (name, is_active) VALUES ('user', TRUE);
 
 -- 2. Tabla users
 CREATE TABLE users (
@@ -127,14 +128,6 @@ CREATE TABLE services (
 );
 
 -- 7. Tabla intermedia vehiculo_servicio
-USE autolavadodb;
-
--- 1. Agregamos las columnas a la tabla existente
-ALTER TABLE vehiculo_servicio 
-ADD COLUMN service_price DECIMAL(10,2) DEFAULT NULL AFTER finished_at,
-ADD COLUMN discount      DECIMAL(10,2) DEFAULT 0.00 AFTER service_price;
-
--- 2. (Opcional) Si quieres recrear la tabla desde cero con el orden correcto:
 DROP TABLE IF EXISTS vehiculo_servicio;
 
 CREATE TABLE vehiculo_servicio (
@@ -165,11 +158,11 @@ CREATE TABLE vehiculo_servicio (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
--- 1. Crear la tabla de sesiones con las especificaciones de tu esquema
+-- 8. Tabla sesiones
 CREATE TABLE user_sessions (
     id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
     user_id         INT             UNSIGNED    NOT NULL,
-    token           VARCHAR(500)   NOT NULL, -- Tamaño amplio para JWT
+    token           VARCHAR(500)   NOT NULL, 
     is_active       BOOL            DEFAULT TRUE,
     created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -184,3 +177,21 @@ CREATE TABLE user_sessions (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+CREATE TABLE inventory_movements (
+    id              INT             UNSIGNED    NOT NULL AUTO_INCREMENT,
+    product_id      INT             UNSIGNED    NOT NULL,
+    quantity        DECIMAL(10,2)   NOT NULL,  
+    type            ENUM('IN', 'OUT') NOT NULL, 
+    reason          VARCHAR(50),               
+    created_at      DATETIME        NOT NULL    DEFAULT CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id),
+    INDEX idx_product (product_id),
+    
+    CONSTRAINT fk_inventory_product
+        FOREIGN KEY (product_id) REFERENCES products(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+

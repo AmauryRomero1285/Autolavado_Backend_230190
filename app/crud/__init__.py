@@ -6,3 +6,4 @@ from . import vehicle
 from . import client
 from . import role
 from . import products
+from . import inventary_movements

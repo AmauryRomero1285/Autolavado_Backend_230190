@@ -9,6 +9,7 @@ from .services import router as services_router
 from .vehicle_service import router as vehicle_services
 from .products import router as products_router
 from .cashier import router as cashier_router 
+from .inventary_movements import router as inventary_router
 
 # Importamos las dependencias de autorización
 from app.api.v1.deps import get_current_active_user, get_current_admin, get_current_client
@@ -19,21 +20,22 @@ api_router = APIRouter()
 api_router.include_router(auth_router)
 
 # --- RUTAS PARA EMPLEADOS Y ADMIN ---
+#services
 api_router.include_router(
     services_router,
-    prefix="/services",
     dependencies=[Depends(get_current_active_user)]
 )
+#vehicles
 api_router.include_router(
     vehicles_router,
-    prefix="/vehicles",
     dependencies=[Depends(get_current_active_user)]
 )
+#clients
 api_router.include_router(
     clients_router,
-    prefix="/clients",
     dependencies=[Depends(get_current_active_user)]
 )
+#services
 api_router.include_router(
     vehicle_services,
     dependencies=[Depends(get_current_active_user)]
@@ -41,6 +43,11 @@ api_router.include_router(
 #products
 api_router.include_router(
     products_router,
+    dependencies=[Depends(get_current_active_user)]
+)
+#invetary-movements
+api_router.include_router(
+    inventary_router,
     dependencies=[Depends(get_current_active_user)]
 )
 #cashier
