@@ -20,13 +20,24 @@ def register(
     if crud.user.get_user_by_email(db, email=user_in.email):
         raise HTTPException(status_code=400, detail="Este correo ya está registrado.")
 
-    # 2. Lógica de ROL (ID 3 = User/Cliente según tu código)
+    # 2. Lógica de ROL (ID 3 = User/Cliente por defecto)
     DEFAULT_ROLE_ID = 3
     final_role_id = DEFAULT_ROLE_ID
 
-    # 3. SEGURIDAD: Si el usuario envía un role_id diferente al default
-    if user_in.role_id and user_in.role_id != DEFAULT_ROLE_ID:
-        # Verificamos si el que hace la petición es REALMENTE un Admin
+    # 3. Verificación de "Primer Administrador" en el sistema
+    # Buscamos si existe al menos un usuario con rol admin (asumiendo ID 1 para Admin)
+    admin_exists = db.query(models.User).join(models.Role).filter(
+        models.Role.name.ilike("admin")
+    ).first()
+
+    # 4. Lógica de asignación de Roles
+    if not admin_exists:
+        # SI NO HAY ADMINS: Permitimos que el primer registro use el role_id que envíe 
+        # (Ideal para el setup inicial del sistema)
+        final_role_id = user_in.role_id or 1  # Si no envía, asume 1 (Admin)
+    
+    elif user_in.role_id and user_in.role_id != DEFAULT_ROLE_ID:
+        # SI YA HAY ADMINS: Solo un Admin logueado puede asignar roles distintos al default
         is_admin = (
             current_user and 
             current_user.role and 
@@ -36,13 +47,13 @@ def register(
         if not is_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="No tienes permiso para asignar roles. Se asignará el rol por defecto."
+                detail="No tienes permiso para asignar roles especiales."
             )
         
-        # Si es Admin, aceptamos el ID que envió
+        # Si es Admin autenticado, aceptamos el ID enviado
         final_role_id = user_in.role_id
 
-    # 4. Crear el usuario con la FK role_id validada
+    # 5. Crear el usuario con la FK role_id validada
     return crud.user.create_user(db, user_in=user_in, role_id=final_role_id)
 
 

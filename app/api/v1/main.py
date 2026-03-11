@@ -19,58 +19,49 @@ api_router = APIRouter()
 # --- RUTAS DE AUTENTICACIÓN (Públicas) ---
 api_router.include_router(auth_router)
 
-# --- RUTAS PARA EMPLEADOS Y ADMIN ---
-#services
-api_router.include_router(
-    services_router,
-    dependencies=[Depends(get_current_active_user)]
-)
-#vehicles
-api_router.include_router(
-    vehicles_router,
-    dependencies=[Depends(get_current_active_user)]
-)
-#clients
-api_router.include_router(
-    clients_router,
-    dependencies=[Depends(get_current_active_user)]
-)
-#services
-api_router.include_router(
-    vehicle_services,
-    dependencies=[Depends(get_current_active_user)]
-)
-#products
+# --- RUTAS ACCESIBLES POR TODOS (USER/CLIENT, EMPLOYEE, ADMIN) ---
+# Se incluyen aquí para permitir (GET)products, (POST)vehicles y /users/me
 api_router.include_router(
     products_router,
     dependencies=[Depends(get_current_active_user)]
 )
-#invetary-movements
+api_router.include_router(
+    vehicles_router,
+    dependencies=[Depends(get_current_active_user)]
+)
+api_router.include_router(
+    services_router,
+    dependencies=[Depends(get_current_active_user)]
+)
+
+# --- RUTAS PARA GESTIÓN OPERATIVA (EMPLOYEE Y ADMIN) ---
+api_router.include_router(
+    clients_router,
+    dependencies=[Depends(get_current_active_user)]
+)
+api_router.include_router(
+    vehicle_services,
+    prefix="/operations",
+    dependencies=[Depends(get_current_active_user)]
+)
 api_router.include_router(
     inventary_router,
     dependencies=[Depends(get_current_active_user)]
 )
-#cashier
 api_router.include_router(
     cashier_router,
+    prefix="/cashier-ops",
     dependencies=[Depends(get_current_active_user)]
 )
 
 # --- RUTAS EXCLUSIVAS PARA ADMIN ---
+# Nota: Se permite get_current_active_user en users_router para que el cliente acceda a /me
+# El resto de métodos (list, delete) deben protegerse internamente en el router con get_current_admin
 api_router.include_router(
     users_router,
-    prefix="/users",
-    dependencies=[Depends(get_current_admin)]
+    dependencies=[Depends(get_current_active_user)]
 )
 api_router.include_router(
     roles_router,
-    prefix="/roles",
     dependencies=[Depends(get_current_admin)]
-)
-
-# --- RUTAS EXCLUSIVAS PARA CLIENTES
-api_router.include_router(
-    vehicles_router,
-    prefix="/vehicles",
-    dependencies=[Depends(get_current_client)]
 )
